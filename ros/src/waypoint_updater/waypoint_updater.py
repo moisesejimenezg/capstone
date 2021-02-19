@@ -9,7 +9,7 @@ import numpy as np
 
 import math
 
-'''
+"""
 This node will publish waypoints from the car's current position to some `x` distance ahead.
 
 As mentioned in the doc, you should ideally first implement a version which does not care
@@ -22,25 +22,27 @@ current status in `/vehicle/traffic_lights` message. You can use this message to
 as well as to verify your TL classifier.
 
 TODO (for Yousuf and Aaron): Stopline location for each traffic light.
-'''
+"""
 
-LOOKAHEAD_WPS = 200 # Number of waypoints we will publish. You can change this number
+LOOKAHEAD_WPS = 200  # Number of waypoints we will publish. You can change this number
 
 
 class WaypointUpdater(object):
     def __init__(self):
-        rospy.init_node('waypoint_updater')
+        rospy.init_node("waypoint_updater")
 
         self.__current_pose = None
         self.__base_waypoints = None
         self.__waypoints_2d = None
         self.__waypoint_tree = None
 
-        rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
-        rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
-        rospy.Subscriber('/traffic_waypoint', Int32, self.traffic_cb)
+        rospy.Subscriber("/current_pose", PoseStamped, self.pose_cb)
+        rospy.Subscriber("/base_waypoints", Lane, self.waypoints_cb)
+        rospy.Subscriber("/traffic_waypoint", Int32, self.traffic_cb)
 
-        self.__final_waypoints_publisher = rospy.Publisher('final_waypoints', Lane, queue_size=1)
+        self.__final_waypoints_publisher = rospy.Publisher(
+            "final_waypoints", Lane, queue_size=1
+        )
 
         self.__step()
 
@@ -64,7 +66,10 @@ class WaypointUpdater(object):
         previous_point_vector = np.array(previous_point)
         pose_vector = np.array([x, y])
 
-        dot_product = np.dot(closest_point_vector - previous_point_vector, pose_vector - closest_point_vector)
+        dot_product = np.dot(
+            closest_point_vector - previous_point_vector,
+            pose_vector - closest_point_vector,
+        )
 
         if dot_product > 0:
             closest_index = (closest_index + 1) % len(self.__waypoints_2d)
@@ -73,7 +78,9 @@ class WaypointUpdater(object):
     def __publish_waypoints(self, next_waypoint_index):
         lane = Lane()
         lane.header = self.__base_waypoints.header
-        lane.waypoints = self.__base_waypoints.waypoints[next_waypoint_index: next_waypoint_index + LOOKAHEAD_WPS]
+        lane.waypoints = self.__base_waypoints.waypoints[
+            next_waypoint_index : next_waypoint_index + LOOKAHEAD_WPS
+        ]
         self.__final_waypoints_publisher.publish(lane)
         pass
 
@@ -84,7 +91,10 @@ class WaypointUpdater(object):
     def waypoints_cb(self, waypoints):
         self.__base_waypoints = waypoints
         if not self.__waypoints_2d:
-            self.__waypoints_2d = [[waypoint.pose.pose.position.x, waypoint.pose.pose.position.y] for waypoint in waypoints.waypoints]
+            self.__waypoints_2d = [
+                [waypoint.pose.pose.position.x, waypoint.pose.pose.position.y]
+                for waypoint in waypoints.waypoints
+            ]
             self.__waypoint_tree = KDTree(self.__waypoints_2d)
         pass
 
@@ -104,15 +114,19 @@ class WaypointUpdater(object):
 
     def distance(self, waypoints, wp1, wp2):
         dist = 0
-        dl = lambda a, b: math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2  + (a.z-b.z)**2)
-        for i in range(wp1, wp2+1):
-            dist += dl(waypoints[wp1].pose.pose.position, waypoints[i].pose.pose.position)
+        dl = lambda a, b: math.sqrt(
+            (a.x - b.x) ** 2 + (a.y - b.y) ** 2 + (a.z - b.z) ** 2
+        )
+        for i in range(wp1, wp2 + 1):
+            dist += dl(
+                waypoints[wp1].pose.pose.position, waypoints[i].pose.pose.position
+            )
             wp1 = i
         return dist
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
         WaypointUpdater()
     except rospy.ROSInterruptException:
-        rospy.logerr('Could not start waypoint updater node.')
+        rospy.logerr("Could not start waypoint updater node.")
