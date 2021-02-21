@@ -43,11 +43,11 @@ class Controller(object):
             max_lat_accel=max_lat_accel,
             max_steer_angle=max_steer_angle,
         )
-        self.__throttle_controller = PID(kp, ji, kd, min_throttle, max_throttle)
+        self.__throttle_controller = PID(kp, ki, kd, min_throttle, max_throttle)
         self.__velocity_lowpassfilter = LowPassFilter(tau, sample_time)
 
         # Assign input args to attributes
-        self.__vehicle_mass = vehcile_mass
+        self.__vehicle_mass = vehicle_mass
         self.__decel_limit = decel_limit
         self.__wheel_radius = wheel_radius
 
