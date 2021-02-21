@@ -69,10 +69,10 @@ class DBWNode(object):
             max_steer_angle=max_steer_angle,
         )
 
-        # TODO: Subscribe to all the topics you need to
-        # rospy.Subscriber("vehicle/dbw_enabled", Bool, self.dbw_enabled_cb)
-        # rospy.Subscriber("/twist_cmd", TwistStamped, self.twist_cmd_cb)
-        # rospy.Subscriber("current_velocity", TwistStamped, self.current_velocity_cb)
+        # Subscribe to all the topics you need to
+        rospy.Subscriber("vehicle/dbw_enabled", Bool, self.dbw_enabled_cb)
+        rospy.Subscriber("/twist_cmd", TwistStamped, self.twist_cmd_cb)
+        rospy.Subscriber("current_velocity", TwistStamped, self.current_velocity_cb)
 
         self.current_velocity = None
         self.current_angle_velocity = None
@@ -97,7 +97,7 @@ class DBWNode(object):
                 self.dbw_enabled,
             )
             if self.dbw_enabled:
-                self.publish(throttle, brake, steer)
+                self.publish(throttle, brake, steering)
             rate.sleep()
 
     def publish(self, throttle, brake, steer):
@@ -117,6 +117,16 @@ class DBWNode(object):
         bcmd.pedal_cmd_type = BrakeCmd.CMD_TORQUE
         bcmd.pedal_cmd = brake
         self.brake_pub.publish(bcmd)
+
+    def dbw_enabled_cb(self, msg):
+        self.dbw_enabled = msg
+
+    def twist_cmd_cb(self, msg):
+        self.linear_velocity = msg.twist.linear.x
+        self.angular_velocity = msg.twist.angular.z
+
+    def current_velocity_cb(self, msg):
+        self.current_velocity = msg.twist.linear.x
 
 
 if __name__ == "__main__":
