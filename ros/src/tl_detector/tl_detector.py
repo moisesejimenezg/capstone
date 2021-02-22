@@ -18,7 +18,7 @@ DEBUG = True
 
 class TLDetector(object):
     def __init__(self):
-        rospy.init_node("tl_detector")
+        rospy.init_node("tl_detector", log_level=rospy.DEBUG)
 
         self.__current_pose = None
         self.__waypoints = None
@@ -74,7 +74,6 @@ class TLDetector(object):
         self.__current_pose = msg
 
     def waypoints_cb(self, waypoints):
-        rospy.loginfo("TLDetector.waypoints_cb")
         self.__waypoints = waypoints
         if not self.__waypoints_2d:
             self.__waypoints_2d = [
@@ -84,19 +83,19 @@ class TLDetector(object):
             self.__waypoint_tree = KDTree(self.__waypoints_2d)
 
     def __publish_traffic_light_state(self, light_wp, state):
-        rospy.loginfo("TLDetector.__publish_traffic_light_state")
+        rospy.logdebug("TLDetector.__publish_traffic_light_state")
         if self.__state != state:
-            rospy.loginfo("State changed.")
+            rospy.logdebug("TLDetector: State changed.")
             self.__state_count = 0
             self.__state = state
         elif self.__state_count >= STATE_COUNT_THRESHOLD:
-            rospy.loginfo("State is stable.")
+            rospy.logdebug("TLDetector: State is stable.")
             self.__last_state = self.__state
             light_wp = light_wp if state == TrafficLight.RED else -1
             self.__last_wp = light_wp
             self.__upcoming_red_light_pub.publish(Int32(light_wp))
         else:
-            rospy.loginfo("Publishing old state.")
+            rospy.logdebug("TLDetector: Publishing old state.")
             self.__upcoming_red_light_pub.publish(Int32(self.__last_wp))
         self.__state_count += 1
 
@@ -133,7 +132,6 @@ class TLDetector(object):
             int: index of the closest waypoint in self.waypoints
 
         """
-        rospy.loginfo("TLDetector.__get_closest_waypoint_index")
         return self.__waypoint_tree.query([x, y], 1)[1]
 
     def __get_light_state(self, light):
@@ -156,13 +154,13 @@ class TLDetector(object):
         return self.__light_classifier.get_classification(cv_image)
 
     def __get_closest_light(self):
-        rospy.loginfo("TLDetector.__get_closest_light")
+        rospy.logdebug("TLDetector.__get_closest_light")
         closest_light = None
         line_index = 0
         # List of positions that correspond to the line to stop in front of for a given intersection
         stop_line_positions = self.__config["stop_line_positions"]
         if self.__current_pose and self.__waypoint_tree and self.__waypoints:
-            rospy.loginfo("Looking for closest light")
+            rospy.logdebug("TLDetector: Looking for closest light")
             car_x = self.__current_pose.pose.position.x
             car_y = self.__current_pose.pose.position.y
             car_index = self.__get_closest_waypoint_index(car_x, car_y)
@@ -178,7 +176,7 @@ class TLDetector(object):
                     distance = current_distance
                     closest_light = light
                     line_index = stop_line_index
-        rospy.loginfo("Closest light at index: " + str(line_index))
+        rospy.logdebug("TLDetector: Closest light at index: " + str(line_index))
         return closest_light, line_index
 
     def __process_traffic_lights(self):
@@ -190,7 +188,7 @@ class TLDetector(object):
             int: ID of traffic light color (specified in styx_msgs/TrafficLight)
 
         """
-        rospy.loginfo("TLDetector.__process_traffic_lights")
+        rospy.logdebug("TLDetector__process_traffic_lights")
 
         closest_light, line_index = self.__get_closest_light()
 
@@ -199,11 +197,14 @@ class TLDetector(object):
                 state = self.__get_light_state(closest_light)
             else:
                 state = closest_light.state
-            rospy.loginfo(
-                "Publishing index: " + str(line_index) + " and state: " + str(state)
+            rospy.logdebug(
+                "TLDetector: Publishing index: "
+                + str(line_index)
+                + " and state: "
+                + str(state)
             )
             return line_index, state
-        rospy.logwarn("Publishing default")
+        rospy.logwarn("TLDetector: Publishing default")
         return -1, TrafficLight.UNKNOWN
 
 
@@ -211,4 +212,4 @@ if __name__ == "__main__":
     try:
         TLDetector()
     except rospy.ROSInterruptException:
-        rospy.logerr("Could not start traffic node.")
+        rospy.logerr("TLDetector: Could not start traffic node.")
