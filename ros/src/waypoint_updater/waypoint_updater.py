@@ -35,13 +35,14 @@ class WaypointUpdater(object):
         self.__base_waypoints = None
         self.__waypoints_2d = None
         self.__waypoint_tree = None
+        self.__light_index = -1
 
         rospy.Subscriber("/current_pose", PoseStamped, self.pose_cb)
         rospy.Subscriber("/base_waypoints", Lane, self.waypoints_cb)
         rospy.Subscriber("/traffic_waypoint", Int32, self.traffic_cb)
 
         self.__final_waypoints_publisher = rospy.Publisher(
-            "final_waypoints", Lane, queue_size=1
+            "/final_waypoints", Lane, queue_size=1
         )
 
         rospy.loginfo("WaypointUpdater: Initialized.")
@@ -98,8 +99,10 @@ class WaypointUpdater(object):
             self.__waypoint_tree = KDTree(self.__waypoints_2d)
 
     def traffic_cb(self, msg):
-        # TODO: Callback for /traffic_waypoint message. Implement
-        pass
+        self.__light_index = msg.data
+        rospy.logdebug(
+            "WaypointUpdater: Next traffic light at " + str(self.__light_index)
+        )
 
     def obstacle_cb(self, msg):
         # TODO: Callback for /obstacle_waypoint message. We will implement it later
