@@ -64,7 +64,7 @@ class TLDetector(object):
             rospy.spin()
 
     def __step(self):
-        rate = rospy.Rate(50)
+        rate = rospy.Rate(10)
         while not rospy.is_shutdown():
             light_wp, state = self.__process_traffic_lights()
             self.__publish_traffic_light_state(light_wp, state)
