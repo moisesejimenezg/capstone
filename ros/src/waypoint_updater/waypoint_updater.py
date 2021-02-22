@@ -29,7 +29,7 @@ LOOKAHEAD_WPS = 200  # Number of waypoints we will publish. You can change this 
 
 class WaypointUpdater(object):
     def __init__(self):
-        rospy.init_node("waypoint_updater")
+        rospy.init_node("waypoint_updater", log_level=rospy.WARN)
 
         self.__current_pose = None
         self.__base_waypoints = None
@@ -44,6 +44,7 @@ class WaypointUpdater(object):
             "final_waypoints", Lane, queue_size=1
         )
 
+        rospy.loginfo("WaypointUpdater: Initialized.")
         self.__step()
 
     def __step(self):
@@ -76,17 +77,16 @@ class WaypointUpdater(object):
         return closest_index
 
     def __publish_waypoints(self, next_waypoint_index):
+        rospy.loginfo("WaypointUpdater: Publish waypoints.")
         lane = Lane()
         lane.header = self.__base_waypoints.header
         lane.waypoints = self.__base_waypoints.waypoints[
             next_waypoint_index : next_waypoint_index + LOOKAHEAD_WPS
         ]
         self.__final_waypoints_publisher.publish(lane)
-        pass
 
     def pose_cb(self, msg):
         self.__current_pose = msg
-        pass
 
     def waypoints_cb(self, waypoints):
         self.__base_waypoints = waypoints
@@ -96,7 +96,6 @@ class WaypointUpdater(object):
                 for waypoint in waypoints.waypoints
             ]
             self.__waypoint_tree = KDTree(self.__waypoints_2d)
-        pass
 
     def traffic_cb(self, msg):
         # TODO: Callback for /traffic_waypoint message. Implement

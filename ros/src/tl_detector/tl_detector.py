@@ -18,7 +18,7 @@ DEBUG = True
 
 class TLDetector(object):
     def __init__(self):
-        rospy.init_node("tl_detector", log_level=rospy.DEBUG)
+        rospy.init_node("tl_detector", log_level=rospy.INFO)
 
         self.__current_pose = None
         self.__waypoints = None
@@ -57,8 +57,10 @@ class TLDetector(object):
         self.__last_state = TrafficLight.UNKNOWN
         self.__last_wp = -1
         self.__state_count = 0
+        rospy.loginfo("TLDetector: Initialized.")
 
         if DEBUG:
+            rospy.logdebug("TLDetector: Debugging.")
             self.__step()
         else:
             rospy.spin()
