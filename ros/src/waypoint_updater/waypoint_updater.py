@@ -25,11 +25,12 @@ TODO (for Yousuf and Aaron): Stopline location for each traffic light.
 """
 
 LOOKAHEAD_WPS = 200  # Number of waypoints we will publish. You can change this number
+MAX_DECEL = 0.5
 
 
 class WaypointUpdater(object):
     def __init__(self):
-        rospy.init_node("waypoint_updater", log_level=rospy.WARN)
+        rospy.init_node("waypoint_updater", log_level=rospy.INFO)
 
         self.__current_pose = None
         self.__base_waypoints = None
@@ -52,8 +53,7 @@ class WaypointUpdater(object):
         rate = rospy.Rate(50)
         while not rospy.is_shutdown():
             if self.__current_pose and self.__base_waypoints and self.__waypoint_tree:
-                next_waypoint_index = self.__get_next_waypoint_index()
-                self.__publish_waypoints(next_waypoint_index)
+                self.__publish_waypoints()
             rate.sleep()
 
     def __get_next_waypoint_index(self):
@@ -77,13 +77,41 @@ class WaypointUpdater(object):
             closest_index = (closest_index + 1) % len(self.__waypoints_2d)
         return closest_index
 
-    def __publish_waypoints(self, next_waypoint_index):
-        rospy.loginfo("WaypointUpdater: Publish waypoints.")
-        lane = Lane()
-        lane.header = self.__base_waypoints.header
-        lane.waypoints = self.__base_waypoints.waypoints[
+    def __extract_reference_waypoints(self, next_waypoint_index):
+        return self.__base_waypoints.waypoints[
             next_waypoint_index : next_waypoint_index + LOOKAHEAD_WPS
         ]
+
+    def __generate_decelerating_waypoints(self, next_waypoint_index):
+        rospy.loginfo("WaypointUpdater: Decelerating waypoints.")
+        reference_waypoints = self.__extract_reference_waypoints(next_waypoint_index)
+        new_waypoints = []
+        for i, wp in enumerate(reference_waypoints):
+            p = Waypoint()
+            p.pose = wp.pose
+            stop_index = max(self.__light_index - next_waypoint_index - 2, 0)
+            distance = self.distance(reference_waypoints, i, stop_index)
+            velocity = math.sqrt(2 * MAX_DECEL * distance)
+            if velocity < 1.0:
+                velocity = 0
+            p.twist.twist.linear.x = min(velocity, wp.twist.twist.linear.x)
+            new_waypoints.append(p)
+        return new_waypoints
+
+    def __generate_lane(self, next_waypoint_index):
+        lane = Lane()
+        lane.header = self.__base_waypoints.header
+        if self.__light_index == -1:
+            rospy.loginfo("WaypointUpdater: Using reference waypoints.")
+            lane.waypoints = self.__extract_reference_waypoints(next_waypoint_index)
+        else:
+            lane.waypoints = self.__generate_decelerating_waypoints(next_waypoint_index)
+        return lane
+
+    def __publish_waypoints(self):
+        rospy.logdebug("WaypointUpdater: Publish waypoints.")
+        next_waypoint_index = self.__get_next_waypoint_index()
+        lane = self.__generate_lane(next_waypoint_index)
         self.__final_waypoints_publisher.publish(lane)
 
     def pose_cb(self, msg):
