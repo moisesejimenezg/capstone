@@ -190,7 +190,7 @@ class TLDetector(object):
             int: ID of traffic light color (specified in styx_msgs/TrafficLight)
 
         """
-        rospy.logdebug("TLDetector__process_traffic_lights")
+        rospy.logdebug("TLDetector.__process_traffic_lights")
 
         closest_light, line_index = self.__get_closest_light()
 
