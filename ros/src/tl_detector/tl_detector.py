@@ -206,7 +206,7 @@ class TLDetector(object):
                 + str(state)
             )
             return line_index, state
-        rospy.logwarn("TLDetector: Publishing default")
+        rospy.logdebug("TLDetector: Publishing default")
         return -1, TrafficLight.UNKNOWN
 
 
