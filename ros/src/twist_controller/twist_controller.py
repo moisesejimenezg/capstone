@@ -69,8 +69,7 @@ class Controller(object):
         assert self.__velocity_lowpassfilter is not None
         return self.__velocity_lowpassfilter
 
-    def control(self, dbw_enabled: bool, current_velocity: float, linear_velocity: float,
-            angular_velocity: float):
+    def control(self, dbw_enabled, current_velocity, linear_velocity, angular_velocity):
         # Return throttle, brake, steer
         if not dbw_enabled:
             self.throttle_controller.reset()
@@ -93,7 +92,7 @@ class Controller(object):
         throttle = self.throttle_controller.step(velocity_error, sample_time)
         brake = 0
 
-        if linear_vel == 0.0 and current_velocity < 0.1:
+        if linear_velocity == 0.0 and current_velocity < 0.1:
             throttle = 0
             brake = Controller.MAX_BRAKE
         elif throttle < 0.1 and velocity_error < 0.0:
