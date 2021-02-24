@@ -30,7 +30,7 @@ MAX_DECEL = 0.5
 
 class WaypointUpdater(object):
     def __init__(self):
-        rospy.init_node("waypoint_updater", log_level=rospy.INFO)
+        rospy.init_node("waypoint_updater", log_level=rospy.WARN)
 
         self.__current_pose = None
         self.__base_waypoints = None
@@ -84,6 +84,9 @@ class WaypointUpdater(object):
 
     def __generate_decelerating_waypoints(self, next_waypoint_index):
         rospy.loginfo("WaypointUpdater: Decelerating waypoints.")
+        rospy.logdebug(
+            "WaypointUpdater: Next Waypoint Index is: " + str(next_waypoint_index)
+        )
         reference_waypoints = self.__extract_reference_waypoints(next_waypoint_index)
         new_waypoints = []
         for i, wp in enumerate(reference_waypoints):

@@ -18,7 +18,7 @@ DEBUG = True
 
 class TLDetector(object):
     def __init__(self):
-        rospy.init_node("tl_detector", log_level=rospy.INFO)
+        rospy.init_node("tl_detector", log_level=rospy.WARN)
 
         self.__current_pose = None
         self.__waypoints = None
