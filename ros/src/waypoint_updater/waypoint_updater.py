@@ -98,10 +98,16 @@ class WaypointUpdater(object):
             new_waypoints.append(p)
         return new_waypoints
 
+    def __next_stop_line_is_within_range(self, next_waypoint_index):
+        return (
+            self.__light_index == -1
+            or self.__light_index >= next_waypoint_index + LOOKAHEAD_WPS
+        )
+
     def __generate_lane(self, next_waypoint_index):
         lane = Lane()
         lane.header = self.__base_waypoints.header
-        if self.__light_index == -1:
+        if self.__next_stop_line_is_within_range(next_waypoint_index):
             rospy.loginfo("WaypointUpdater: Using reference waypoints.")
             lane.waypoints = self.__extract_reference_waypoints(next_waypoint_index)
         else:
