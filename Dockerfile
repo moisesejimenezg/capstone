@@ -42,4 +42,11 @@ RUN rm -rf /var/lib/apt/lists/*
 # See: https://github.com/systemd/systemd/blob/aa0c34279ee40bce2f9681b496922dedbadfca19/src/basic/virt.c#L434
 RUN mkdir -p /run/systemd && echo 'docker' > /run/systemd/container
 
+# install dependencies
+RUN apt update
+RUN apt install git -y
+
+# clone repository
+RUN git clone https://github.com/moisesejimenezg/capstone.git
+
 CMD ["/bin/bash"]
