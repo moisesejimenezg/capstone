@@ -1,34 +1,55 @@
-FROM ros:kinetic-robot
-LABEL maintainer="olala7846@gmail.com"
+#https://partner-images.canonical.com/core/xenial/current/ubuntu-xenial-core-cloudimg-amd64-root.tar.gz
+FROM ubuntu:xenial
 
-# Install Dataspeed DBW https://goo.gl/KFSYi1 from binary
-# adding Dataspeed server to apt
-RUN sh -c 'echo "deb [ arch=amd64 ] http://packages.dataspeedinc.com/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-dataspeed-public.list'
-RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys FF6D3CDA
-RUN apt-get update
+# a few minor docker-specific tweaks
+# see https://github.com/docker/docker/blob/9a9fc01af8fb5d98b8eec0740716226fadb3735c/contrib/mkimage/debootstrap
+RUN set -xe \
+	\
+# https://github.com/docker/docker/blob/9a9fc01af8fb5d98b8eec0740716226fadb3735c/contrib/mkimage/debootstrap#L40-L48
+	&& echo '#!/bin/sh' > /usr/sbin/policy-rc.d \
+	&& echo 'exit 101' >> /usr/sbin/policy-rc.d \
+	&& chmod +x /usr/sbin/policy-rc.d \
+	\
+# https://github.com/docker/docker/blob/9a9fc01af8fb5d98b8eec0740716226fadb3735c/contrib/mkimage/debootstrap#L54-L56
+	&& dpkg-divert --local --rename --add /sbin/initctl \
+	&& cp -a /usr/sbin/policy-rc.d /sbin/initctl \
+	&& sed -i 's/^exit.*/exit 0/' /sbin/initctl \
+	\
+# https://github.com/docker/docker/blob/9a9fc01af8fb5d98b8eec0740716226fadb3735c/contrib/mkimage/debootstrap#L71-L78
+	&& echo 'force-unsafe-io' > /etc/dpkg/dpkg.cfg.d/docker-apt-speedup \
+	\
+# https://github.com/docker/docker/blob/9a9fc01af8fb5d98b8eec0740716226fadb3735c/contrib/mkimage/debootstrap#L85-L105
+	&& echo 'DPkg::Post-Invoke { "rm -f /var/cache/apt/archives/*.deb /var/cache/apt/archives/partial/*.deb /var/cache/apt/*.bin || true"; };' > /etc/apt/apt.conf.d/docker-clean \
+	&& echo 'APT::Update::Post-Invoke { "rm -f /var/cache/apt/archives/*.deb /var/cache/apt/archives/partial/*.deb /var/cache/apt/*.bin || true"; };' >> /etc/apt/apt.conf.d/docker-clean \
+	&& echo 'Dir::Cache::pkgcache ""; Dir::Cache::srcpkgcache "";' >> /etc/apt/apt.conf.d/docker-clean \
+	\
+# https://github.com/docker/docker/blob/9a9fc01af8fb5d98b8eec0740716226fadb3735c/contrib/mkimage/debootstrap#L109-L115
+	&& echo 'Acquire::Languages "none";' > /etc/apt/apt.conf.d/docker-no-languages \
+	\
+# https://github.com/docker/docker/blob/9a9fc01af8fb5d98b8eec0740716226fadb3735c/contrib/mkimage/debootstrap#L118-L130
+	&& echo 'Acquire::GzipIndexes "true"; Acquire::CompressionTypes::Order:: "gz";' > /etc/apt/apt.conf.d/docker-gzip-indexes \
+	\
+# https://github.com/docker/docker/blob/9a9fc01af8fb5d98b8eec0740716226fadb3735c/contrib/mkimage/debootstrap#L134-L151
+	&& echo 'Apt::AutoRemove::SuggestsImportant "false";' > /etc/apt/apt.conf.d/docker-autoremove-suggests
 
-# setup rosdep
-RUN sh -c 'echo "yaml http://packages.dataspeedinc.com/ros/ros-public-'$ROS_DISTRO'.yaml '$ROS_DISTRO'" > /etc/ros/rosdep/sources.list.d/30-dataspeed-public-'$ROS_DISTRO'.list'
-RUN rosdep update
-RUN apt-get install -y ros-$ROS_DISTRO-dbw-mkz
-RUN apt-get upgrade -y
-# end installing Dataspeed DBW
+# delete all the apt list files since they're big and get stale quickly
+RUN rm -rf /var/lib/apt/lists/*
+# this forces "apt-get update" in dependent images, which is also good
+# (see also https://bugs.launchpad.net/cloud-images/+bug/1699913)
 
-# install python packages
-RUN apt-get install -y python-pip
-RUN pip install --upgrade pip
-COPY requirements.txt ./requirements.txt
+# make systemd-detect-virt return "docker"
+# See: https://github.com/systemd/systemd/blob/aa0c34279ee40bce2f9681b496922dedbadfca19/src/basic/virt.c#L434
+RUN mkdir -p /run/systemd && echo 'docker' > /run/systemd/container
+
+# Helper scripts
+ADD docker/start.sh start.sh
+
+ADD docker/dependencies.sh dependencies.sh
+RUN ./dependencies.sh
+RUN rm dependencies.sh
+
+ADD requirements.txt requirements.txt
 RUN pip install -r requirements.txt
+RUN rm requirements.txt
 
-# install required ros dependencies
-RUN apt-get install -y ros-$ROS_DISTRO-cv-bridge
-RUN apt-get install -y ros-$ROS_DISTRO-pcl-ros
-RUN apt-get install -y ros-$ROS_DISTRO-image-proc
-
-# socket io
-RUN apt-get install -y netbase
-
-RUN mkdir /capstone
-VOLUME ["/capstone"]
-VOLUME ["/root/.ros/log/"]
-WORKDIR /capstone/ro
+CMD ["/bin/bash"]
