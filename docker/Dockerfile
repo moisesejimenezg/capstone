@@ -45,15 +45,16 @@ RUN mkdir -p /run/systemd && echo 'docker' > /run/systemd/container
 RUN apt update
 RUN apt install git -y
 RUN apt install curl -y
-RUN apt install python -y
+RUN apt install gcc -y
+RUN apt install -y python python-dev
 
 RUN curl -O https://bootstrap.pypa.io/2.7/get-pip.py
 RUN python get-pip.py
+RUN rm get-pip.py
 RUN python -m pip install --upgrade "pip < 21.0"
-RUN python -m pip install tensorflow==1.3
-
 
 # clone repository
 RUN git clone https://github.com/moisesejimenezg/capstone.git
+RUN pip install -r capstone/requirements.txt
 
 CMD ["/bin/bash"]
