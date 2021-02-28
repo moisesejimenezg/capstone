@@ -2,7 +2,7 @@ import cv2
 import pickle
 import numpy as np
 
-PICKLE_FILE = "/capstone/images/simulator.p"
+PICKLE_FILE = "/capstone/images/pickle_rick.p"
 PAIR_PER_PICKLE = 1000
 MAX_PICKLE_N = 7
 
