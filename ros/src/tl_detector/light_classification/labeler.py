@@ -1,23 +1,53 @@
 import cv2
+import pickle
+import numpy as np
 
-IMG_PREFIX = "/capstone/images/image_"
-IMG_SUFFIX = ".png"
-LABEL_FILE = "/capstone/images/labels.csv"
+PICKLE_FILE = "/capstone/images/simulator.p"
+PAIR_PER_PICKLE = 1000
+MAX_PICKLE_N = 7
 
 
 class Labeler:
-    def __init__(self):
-        self.__image_id = 0
-        self.__image_array = []
-        self.__image_size = (800, 600)
-        self.__file_object = open(LABEL_FILE, "w+")
+    def __init__(self, mode):
+        self.__pickles = 0
+        self.__pickle_file = open(PICKLE_FILE, mode)
+        self.__header = False
+        self.__reset()
+
+    def __reset(self):
+        self.__features = []
+        self.__labels = np.array([])
 
     def label_image(self, image, label):
-        if self.__image_id < 1000:
-            cv2.imwrite(IMG_PREFIX + str(self.__image_id) + IMG_SUFFIX, image)
-            self.__image_id += 1
-            self.__file_object.write(str(label) + "\n")
-        elif not self.__file_object.closed:
-            self.__file_object.close()
-            return True
-        return False
+        if not self.__header:
+            pickle.dump(MAX_PICKLE_N, self.__pickle_file)
+            self.__header = True
+        if self.__pickles < MAX_PICKLE_N:
+            if self.__labels.size < PAIR_PER_PICKLE:
+                array = np.array(image)
+                self.__features.append(image)
+                self.__labels = np.append(self.__labels, label)
+            else:
+                data = {"features": np.array(self.__features), "labels": self.__labels}
+                pickle.dump(data, self.__pickle_file)
+                self.__reset()
+                self.__pickles += 1
+            return False
+        self.__pickle_file.close()
+        return True
+
+    def __load(self):
+        if self.__pickles == 0:
+            self.__pickles = pickle.load(self.__pickle_file)
+        if self.__pickles > 0:
+            self.__pickles -= 1
+            return pickle.load(self.__pickle_file)
+        return None
+
+    def load(self):
+        data = self.__load()
+        while self.__pickles > 0:
+            new_pickle = self.__load()
+            data["features"] = np.append(data["features"], new_pickle["features"])
+            data["labels"] = np.append(data["labels"], new_pickle["labels"])
+        return data
