@@ -13,12 +13,16 @@ import cv2
 import yaml
 
 STATE_COUNT_THRESHOLD = 3
-DEBUG = True
+DEBUG = False
+log_level = rospy.INFO
+
+LABEL_MODE = 0
+CLSFY_MODE = 1
 
 
 class TLDetector(object):
     def __init__(self):
-        rospy.init_node("tl_detector", log_level=rospy.WARN)
+        rospy.init_node("tl_detector", log_level=log_level)
 
         self.__current_pose = None
         self.__waypoints = None
@@ -26,6 +30,15 @@ class TLDetector(object):
         self.__waypoint_tree = None
         self.__camera_image = None
         self.__lights = []
+        self.__has_image = False
+        self.__bridge = CvBridge()
+        self.__light_classifier = TLClassifier()
+        self.__listener = tf.TransformListener()
+        self.__state = TrafficLight.UNKNOWN
+        self.__last_state = TrafficLight.UNKNOWN
+        self.__last_wp = -1
+        self.__state_count = 0
+        self.__mode = LABEL_MODE
 
         sub1 = rospy.Subscriber("/current_pose", PoseStamped, self.pose_cb)
         sub2 = rospy.Subscriber("/base_waypoints", Lane, self.waypoints_cb)
@@ -48,29 +61,8 @@ class TLDetector(object):
         self.__upcoming_red_light_pub = rospy.Publisher(
             "/traffic_waypoint", Int32, queue_size=1
         )
-
-        self.__bridge = CvBridge()
-        self.__light_classifier = TLClassifier()
-        self.__listener = tf.TransformListener()
-
-        self.__state = TrafficLight.UNKNOWN
-        self.__last_state = TrafficLight.UNKNOWN
-        self.__last_wp = -1
-        self.__state_count = 0
         rospy.loginfo("TLDetector: Initialized.")
-
-        if DEBUG:
-            rospy.logdebug("TLDetector: Debugging.")
-            self.__step()
-        else:
-            rospy.spin()
-
-    def __step(self):
-        rate = rospy.Rate(10)
-        while not rospy.is_shutdown():
-            light_wp, state = self.__process_traffic_lights()
-            self.__publish_traffic_light_state(light_wp, state)
-            rate.sleep()
+        rospy.spin()
 
     def pose_cb(self, msg):
         self.__current_pose = msg
@@ -112,9 +104,16 @@ class TLDetector(object):
             msg (Image): image from car-mounted camera
 
         """
+        rospy.logdebug("TLDetector.image_cb")
         self.__has_image = True
         self.__camera_image = msg
+
+        cv_image = self.__bridge.imgmsg_to_cv2(msg, "bgr8")
         light_wp, state = self.__process_traffic_lights()
+        if self.__mode == LABEL_MODE:
+            done = self.__light_classifier.save_image(cv_image, state)
+            if done:
+                rospy.loginfo("TLDetector.image_cb: Done generating labels.")
 
         """
         Publish upcoming red lights at camera frequency.
@@ -146,13 +145,14 @@ class TLDetector(object):
             int: ID of traffic light color (specified in styx_msgs/TrafficLight)
 
         """
+        rospy.logdebug("TLDetector.__get_light_state")
         if not self.__has_image:
             self.__prev_light_loc = None
             return False
 
         cv_image = self.__bridge.imgmsg_to_cv2(self.__camera_image, "bgr8")
 
-        # Get classification
+        rospy.logdebug("TLDetector: classifying light")
         return self.__light_classifier.get_classification(cv_image)
 
     def __get_closest_light(self):
@@ -195,9 +195,9 @@ class TLDetector(object):
         closest_light, line_index = self.__get_closest_light()
 
         if closest_light:
-            if not DEBUG:
+            if self.__mode == CLSFY_MODE:
                 state = self.__get_light_state(closest_light)
-            else:
+            elif self.__mode == LABEL_MODE:
                 state = closest_light.state
             rospy.logdebug(
                 "TLDetector: Publishing index: "
