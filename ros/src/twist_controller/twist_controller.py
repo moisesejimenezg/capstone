@@ -71,13 +71,13 @@ class Controller(object):
 
     def control(self, dbw_enabled, current_velocity, linear_velocity, angular_velocity):
         # Return throttle, brake, steer
-        if not dbw_enabled:
+        if not dbw_enabled or current_velocity is None or linear_velocity is None or angular_velocity is None:
             self.throttle_controller.reset()
             return 0.0, 0.0, 0.0
 
         current_velocity = self.velocity_lowpassfilter.filt(current_velocity)
         steering = self.yaw_controller.get_steering(
-            linear_velocity, angular_velocity, current_velocity
+            linear_velocity=linear_velocity, angular_velocity=angular_velocity, current_velocity=current_velocity
         )
 
         # Compute velocity error
