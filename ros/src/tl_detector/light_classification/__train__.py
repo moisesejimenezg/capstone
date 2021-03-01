@@ -28,10 +28,11 @@ def generator(samples, batch_sz=32):
 
 # ======== MAIN ========
 file_name = Path(os.getcwd()).parent.parent.parent.parent.joinpath('images/pickle_rick.p')
-assert os.path.isfile(file_name), 'data file not found'
+assert os.path.isfile(str(file_name)), 'data file not found'
 
-with open(file_name, mode='rb') as f:
+with open(str(file_name), mode='rb') as f:
     data = pickle.load(f)
+
 
 feature_shape = [256, 124, 3]
 
