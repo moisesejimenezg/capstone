@@ -65,8 +65,13 @@ train_samples, validation_samples, train_labels, validation_labels = train_test_
     data["features"], data["labels"], test_size=0.2
 )
 
+print("train_samples: " + str(train_samples.size))
+print("validation_samples: " + str(validation_samples.size))
+print("train_labels: " + str(train_labels.size))
+print("validation_labels: " + str(validation_labels.size))
+
 # Set our batch size
-batch_size = 128
+batch_size = 32
 
 # compile and train the model using the generator function
 train_data = {"features": train_samples, "labels": train_labels}
@@ -83,9 +88,9 @@ history_object = model.fit_generator(
     verbose=1,
 )
 model.save("model.h5")
-
 # print the keys contained in the history object
 print(history_object.history.keys())
+
 
 # plot the training and validation loss for each epoch
 plt.plot(history_object.history["loss"])
