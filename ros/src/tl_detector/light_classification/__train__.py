@@ -1,5 +1,6 @@
 import os
 import pickle
+from pathlib import Path
 from math import ceil
 
 import matplotlib.pyplot as plt
@@ -26,7 +27,7 @@ def generator(samples, batch_sz=32):
 
 
 # ======== MAIN ========
-file_name = './../../../data/dataset.p'
+file_name = Path(os.getcwd()).parent.parent.parent.parent.joinpath('images/pickle_rick.p')
 assert os.path.isfile(file_name), 'data file not found'
 
 with open(file_name, mode='rb') as f:

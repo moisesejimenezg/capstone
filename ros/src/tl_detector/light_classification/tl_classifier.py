@@ -34,6 +34,9 @@ class TLClassifier(object):
             uint8 RED=0
         """
         # TODO implement light color prediction
+        if self.__model is None:
+            return TrafficLight.UNKNOWN
+
         image_array = np.asarray(image)
         traffic_light = int(
             self.model.predict(image_array[None, :, :, :], batch_size=1)
