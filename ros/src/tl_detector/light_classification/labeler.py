@@ -4,7 +4,7 @@ import numpy as np
 import cv2
 
 PICKLE_FILE = "/capstone/images/pickle_rick.p"
-PAIR_PER_PICKLE = 100
+PAIR_PER_PICKLE = 50
 MAX_PICKLE_N = 50
 
 
