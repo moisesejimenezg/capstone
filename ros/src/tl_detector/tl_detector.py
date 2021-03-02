@@ -39,6 +39,7 @@ class TLDetector(object):
         self.__last_wp = -1
         self.__state_count = 0
         self.__mode = LABEL_MODE
+        self.__classification_done = False
 
         sub1 = rospy.Subscriber("/current_pose", PoseStamped, self.pose_cb)
         sub2 = rospy.Subscriber("/base_waypoints", Lane, self.waypoints_cb)
@@ -110,9 +111,11 @@ class TLDetector(object):
 
         cv_image = self.__bridge.imgmsg_to_cv2(msg, "bgr8")
         light_wp, state = self.__process_traffic_lights()
-        if self.__mode == LABEL_MODE:
-            done = self.__light_classifier.save_image(cv_image, state)
-            if done:
+        if self.__mode == LABEL_MODE and not self.__classification_done:
+            self.__classification_done = self.__light_classifier.save_image(
+                cv_image, state
+            )
+            if self.__classification_done:
                 rospy.loginfo("TLDetector.image_cb: Done generating labels.")
 
         """
