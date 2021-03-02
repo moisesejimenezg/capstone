@@ -6,11 +6,8 @@ labeler = Labeler("rb")
 
 data = labeler.load()
 
-# Resize data
-feature_shape = [600, 800, 3]
-data["features"] = data["features"].reshape([-1] + feature_shape)
-
-cv2.imwrite("test.png", data["features"][0])
+data["features"] = data["features"].reshape(-1, 150, 200, 3)
+cv2.imwrite("test.png", data["features"][1000])
 
 print("Features: " + str(len(data["features"])))
 print("Labels: " + str(len(data["labels"])))
