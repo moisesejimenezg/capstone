@@ -1,10 +1,15 @@
 from styx_msgs.msg import TrafficLight
+from labeler import Labeler
+import cv2
 
 
 class TLClassifier(object):
     def __init__(self):
         # TODO load classifier
-        pass
+        self.__labeler = Labeler("wb")
+
+    def save_image(self, image, label):
+        return self.__labeler.label_image(image, label)
 
     def get_classification(self, image):
         """Determines the color of the traffic light in the image
