@@ -1,8 +1,18 @@
 import os
 
 import numpy as np
+import cv2
 from keras.models import load_model
 from styx_msgs.msg import TrafficLight
+
+MODEL_LOCATION = "/capstone/ros/src/tl_detector/light_classification/model.h5"
+
+
+def resize_image(image):
+    new_height = int(image.shape[0] * 0.25)
+    new_width = int(image.shape[1] * 0.25)
+    dim = (new_width, new_height)
+    return cv2.resize(image, dim, interpolation=cv2.INTER_AREA)
 
 
 class TLClassifier(object):
@@ -10,8 +20,8 @@ class TLClassifier(object):
         # TODO load classifier
         self.__model = None
 
-        if os.path.isfile("model.h5"):
-            self.__model = load_model("model.h5")
+        if os.path.isfile(MODEL_LOCATION):
+            self.__model = load_model(MODEL_LOCATION)
         else:
             print("Could not init TLClassifier!")
 
@@ -37,7 +47,7 @@ class TLClassifier(object):
         if self.__model is None:
             return TrafficLight.UNKNOWN
 
-        image_array = np.asarray(image)
+        image_array = np.array(resize_image(image))
         traffic_light = int(
             self.model.predict(image_array[None, :, :, :], batch_size=1)
         )
