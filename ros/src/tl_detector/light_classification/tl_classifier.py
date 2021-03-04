@@ -17,9 +17,9 @@ def resize_image(image):
 
 
 class TLClassifier(object):
-    def __init__(self):
+    def __init__(self, mode="rb"):
         # TODO load classifier
-        self.__labeler = Labeler("wb")
+        self.__labeler = Labeler(mode)
         self.__model = None
 
         if os.path.isfile(MODEL_LOCATION):
