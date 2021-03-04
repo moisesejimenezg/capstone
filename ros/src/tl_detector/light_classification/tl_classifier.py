@@ -6,6 +6,7 @@ import cv2
 import pathlib
 from keras.models import load_model
 from labeler import Labeler
+
 # from styx_msgs.msg import TrafficLight
 
 MODEL_LOCATION = str(pathlib.Path(os.getcwd()).joinpath('model.h5'))
@@ -70,7 +71,8 @@ class TLClassifier(object):
         )
         prob = self.model.predict_proba(image_array[None, :, :, :], batch_size=1)
 
-        print(prob)
+        if prob < 0.5:
+            return self.__hough_stop_light_detector(image_array)
 
         if traffic_light == 0:
             return TrafficLight.RED
@@ -78,4 +80,30 @@ class TLClassifier(object):
             return TrafficLight.YELLOW
         elif traffic_light == 2:
             return TrafficLight.GREEN
+        return TrafficLight.UNKNOWN
+
+    def __hough_stop_light_detector(self, img):
+        gray = np.array(img)[:, :, 2]
+        cv2.medianBlur(gray, 7)
+        circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, dp=1.0, minDist=5,
+                                   param1=100, param2=15, minRadius=3, maxRadius=10)
+        if circles is not None:
+            circles = np.uint16(np.around(circles))
+            center_dots = []
+            for i in circles[0, :]:
+                # draw the outer circle
+                cv2.circle(img, (i[0], i[1]), i[2], (0, 255, 0), 2)
+                # draw the center of the circle
+                cv2.circle(img, (i[0], i[1]), 2, (0, 0, 255), 3)
+                center_dots.append(img[i[1], i[0]])
+
+            median = np.median(center_dots, axis=0)
+            is_red = median[0] < 10 and median[1] < 10 and median[2] > 200
+            is_green = median[0] < 10 and median[1] > 200 and median[2] < 10
+            if is_red:
+                return TrafficLight.RED
+            elif is_green:
+                return TrafficLight.GREEN
+            # TODO: orange case
+
         return TrafficLight.UNKNOWN
