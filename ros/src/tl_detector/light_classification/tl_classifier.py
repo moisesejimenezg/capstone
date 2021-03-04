@@ -1,12 +1,19 @@
 import os
 
+import enum
 import numpy as np
 import cv2
 from keras.models import load_model
 from styx_msgs.msg import TrafficLight
-from labeler import Labeler
 
-MODEL_LOCATION = "/capstone/ros/src/tl_detector/light_classification/model.h5"
+MODEL_LOCATION = str(Path(os.getcwd()).joinpath('model.h5'))
+
+# from styx_msgs.msg import TrafficLight
+class TrafficLight(enum.Enum):
+    RED = 0
+    YELLOW = 1
+    GREEN = 2
+    UNKNOWN = 4
 
 
 def resize_image(image):
@@ -58,6 +65,10 @@ class TLClassifier(object):
         traffic_light = int(
             self.model.predict(image_array[None, :, :, :], batch_size=1)
         )
+        prob = self.model.predict_proba(image_array[None, :, :, :], batch_size=1)
+
+        print(prob)
+
         if traffic_light == 0:
             return TrafficLight.RED
         elif traffic_light == 1:
@@ -65,3 +76,4 @@ class TLClassifier(object):
         elif traffic_light == 2:
             return TrafficLight.GREEN
         return TrafficLight.UNKNOWN
+
