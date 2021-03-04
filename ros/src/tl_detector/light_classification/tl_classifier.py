@@ -4,6 +4,7 @@ import numpy as np
 import cv2
 from keras.models import load_model
 from styx_msgs.msg import TrafficLight
+from labeler import Labeler
 
 MODEL_LOCATION = "/capstone/ros/src/tl_detector/light_classification/model.h5"
 
@@ -18,6 +19,7 @@ def resize_image(image):
 class TLClassifier(object):
     def __init__(self):
         # TODO load classifier
+        self.__labeler = Labeler("wb")
         self.__model = None
 
         if os.path.isfile(MODEL_LOCATION):
@@ -29,6 +31,9 @@ class TLClassifier(object):
     def model(self):
         assert self.__model is not None
         return self.__model
+
+    def save_image(self, image, label):
+        return self.__labeler.label_image(image, label)
 
     def get_classification(self, image):
         """Determines the color of the traffic light in the image
@@ -58,4 +63,3 @@ class TLClassifier(object):
         elif traffic_light == 2:
             return TrafficLight.GREEN
         return TrafficLight.UNKNOWN
-

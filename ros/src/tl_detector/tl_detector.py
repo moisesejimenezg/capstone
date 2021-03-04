@@ -14,7 +14,7 @@ import yaml
 
 STATE_COUNT_THRESHOLD = 3
 DEBUG = False
-log_level = rospy.INFO
+LOG_LEVEL = rospy.INFO
 
 LABEL_MODE = 0
 CLSFY_MODE = 1
@@ -22,7 +22,7 @@ CLSFY_MODE = 1
 
 class TLDetector(object):
     def __init__(self):
-        rospy.init_node("tl_detector", log_level=log_level)
+        rospy.init_node("tl_detector", log_level=LOG_LEVEL)
 
         self.__current_pose = None
         self.__waypoints = None
