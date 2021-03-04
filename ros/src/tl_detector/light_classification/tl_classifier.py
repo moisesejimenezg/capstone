@@ -3,10 +3,13 @@ import os
 import enum
 import numpy as np
 import cv2
+import pathlib
 from keras.models import load_model
-from styx_msgs.msg import TrafficLight
+from labeler import Labeler
+# from styx_msgs.msg import TrafficLight
 
-MODEL_LOCATION = str(Path(os.getcwd()).joinpath('model.h5'))
+MODEL_LOCATION = str(pathlib.Path(os.getcwd()).joinpath('model.h5'))
+
 
 # from styx_msgs.msg import TrafficLight
 class TrafficLight(enum.Enum):
@@ -76,4 +79,3 @@ class TLClassifier(object):
         elif traffic_light == 2:
             return TrafficLight.GREEN
         return TrafficLight.UNKNOWN
-

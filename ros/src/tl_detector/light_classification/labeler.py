@@ -9,7 +9,7 @@ PAIR_PER_PICKLE = 50
 MAX_PICKLE_N = 50
 PICKLE_FILE = str(
     Path(os.getcwd()).parent.parent.parent.parent.joinpath(
-        "/capstone/images/pickle_rick_150_200.p"
+        "images/pickle_rick_150_200.p"
     )
 )
 
