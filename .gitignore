@@ -8,4 +8,6 @@ profile.tmp
 *.csv
 *.bag
 .idea/
+.vscode/
 venv/
+images/
