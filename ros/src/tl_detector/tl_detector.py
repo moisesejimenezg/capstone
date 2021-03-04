@@ -14,7 +14,7 @@ import yaml
 
 STATE_COUNT_THRESHOLD = 3
 DEBUG = False
-log_level = rospy.INFO
+LOG_LEVEL = rospy.INFO
 
 LABEL_MODE = 0
 CLSFY_MODE = 1
@@ -22,7 +22,7 @@ CLSFY_MODE = 1
 
 class TLDetector(object):
     def __init__(self):
-        rospy.init_node("tl_detector", log_level=log_level)
+        rospy.init_node("tl_detector", log_level=LOG_LEVEL)
 
         self.__current_pose = None
         self.__waypoints = None
@@ -32,13 +32,16 @@ class TLDetector(object):
         self.__lights = []
         self.__has_image = False
         self.__bridge = CvBridge()
-        self.__light_classifier = TLClassifier()
+        self.__mode = LABEL_MODE
+        if self.__mode == LABEL_MODE:
+            self.__light_classifier = TLClassifier("wb")
+        else:
+            self.__light_classifier = TLClassifier()
         self.__listener = tf.TransformListener()
         self.__state = TrafficLight.UNKNOWN
         self.__last_state = TrafficLight.UNKNOWN
         self.__last_wp = -1
         self.__state_count = 0
-        self.__mode = LABEL_MODE
         self.__classification_done = False
 
         sub1 = rospy.Subscriber("/current_pose", PoseStamped, self.pose_cb)

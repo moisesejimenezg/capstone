@@ -7,7 +7,11 @@ from pathlib import Path
 
 PAIR_PER_PICKLE = 50
 MAX_PICKLE_N = 50
-PICKLE_FILE = str(Path(os.getcwd()).parent.parent.parent.parent.joinpath('images/pickle_rick_800_600.p'))
+PICKLE_FILE = str(
+    Path(os.getcwd()).parent.parent.parent.parent.joinpath(
+        "/capstone/images/pickle_rick_150_200.p"
+    )
+)
 
 
 def resize_image(image):
@@ -19,7 +23,6 @@ def resize_image(image):
 
 class Labeler:
     def __init__(self, mode):
-        assert os.path.isfile(str(PICKLE_FILE)), 'data file not found'
         self.__pickles = 0
         self.__pickle_file = open(PICKLE_FILE, mode)
         self.__header = False
