@@ -19,7 +19,8 @@ def resize_image(image):
 class TLClassifier(object):
     def __init__(self, mode="rb"):
         # TODO load classifier
-        self.__labeler = Labeler(mode)
+        if mode == "wb":
+            self.__labeler = Labeler(mode)
         self.__model = None
 
         if os.path.isfile(MODEL_LOCATION):
@@ -33,6 +34,7 @@ class TLClassifier(object):
         return self.__model
 
     def save_image(self, image, label):
+        cv2.imwrite("test.png", image)
         return self.__labeler.label_image(image, label)
 
     def get_classification(self, image):
