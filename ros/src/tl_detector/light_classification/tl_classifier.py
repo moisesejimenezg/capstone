@@ -6,18 +6,10 @@ import cv2
 import pathlib
 from keras.models import load_model
 from labeler import Labeler
-
-# from styx_msgs.msg import TrafficLight
-
-MODEL_LOCATION = str(pathlib.Path(os.getcwd()).joinpath('model.h5'))
+from styx_msgs.msg import TrafficLight
 
 
-# from styx_msgs.msg import TrafficLight
-class TrafficLight(enum.Enum):
-    RED = 0
-    YELLOW = 1
-    GREEN = 2
-    UNKNOWN = 4
+MODEL_LOCATION = str(pathlib.Path(os.getcwd()).joinpath("model.h5"))
 
 
 def resize_image(image):
@@ -72,6 +64,7 @@ class TLClassifier(object):
         prob = self.model.predict_proba(image_array[None, :, :, :], batch_size=1)
 
         if prob < 0.5:
+            print("Using hough due to low probability: " + str(prob))
             return self.__hough_stop_light_detector(image_array)
 
         if traffic_light == 0:
