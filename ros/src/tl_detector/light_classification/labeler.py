@@ -37,7 +37,12 @@ class Labeler:
             pickle.dump(MAX_PICKLE_N, self.__pickle_file)
             self.__header = True
         print(
-            "Pickle #: " + str(self.__pickles) + " image #: " + str(self.__labels.size)
+            "Pickle #: "
+            + str(self.__pickles)
+            + " image #: "
+            + str(self.__labels.size)
+            + " label: "
+            + str(label)
         )
         if self.__pickles < MAX_PICKLE_N:
             if self.__labels.size < PAIR_PER_PICKLE:

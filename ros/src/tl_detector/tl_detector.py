@@ -18,6 +18,7 @@ LOG_LEVEL = rospy.INFO
 
 LABEL_MODE = 0
 CLSFY_MODE = 1
+MODE = CLSFY_MODE
 
 
 class TLDetector(object):
@@ -32,7 +33,7 @@ class TLDetector(object):
         self.__lights = []
         self.__has_image = False
         self.__bridge = CvBridge()
-        self.__mode = LABEL_MODE
+        self.__mode = MODE
         if self.__mode == LABEL_MODE:
             self.__light_classifier = TLClassifier("wb")
         else:
@@ -114,7 +115,7 @@ class TLDetector(object):
 
         cv_image = self.__bridge.imgmsg_to_cv2(msg, "bgr8")
         light_wp, state = self.__process_traffic_lights()
-        if self.__mode == LABEL_MODE and not self.__classification_done:
+        if self.__mode == LABEL_MODE and not self.__classification_done and state != 4:
             self.__classification_done = self.__light_classifier.save_image(
                 cv_image, state
             )
@@ -161,17 +162,21 @@ class TLDetector(object):
         rospy.logdebug("TLDetector: classifying light")
         return self.__light_classifier.get_classification(cv_image)
 
+    def __get_car_index(self):
+        car_x = self.__current_pose.pose.position.x
+        car_y = self.__current_pose.pose.position.y
+        return self.__get_closest_waypoint_index(car_x, car_y)
+
     def __get_closest_light(self):
         rospy.logdebug("TLDetector.__get_closest_light")
         closest_light = None
         line_index = 0
         # List of positions that correspond to the line to stop in front of for a given intersection
         stop_line_positions = self.__config["stop_line_positions"]
+        car_index = -1
         if self.__current_pose and self.__waypoint_tree and self.__waypoints:
             rospy.logdebug("TLDetector: Looking for closest light")
-            car_x = self.__current_pose.pose.position.x
-            car_y = self.__current_pose.pose.position.y
-            car_index = self.__get_closest_waypoint_index(car_x, car_y)
+            car_index = self.__get_car_index()
 
             distance = len(self.__waypoints.waypoints)
             for i, light in enumerate(self.__lights):
@@ -184,7 +189,12 @@ class TLDetector(object):
                     distance = current_distance
                     closest_light = light
                     line_index = stop_line_index
-        rospy.logdebug("TLDetector: Closest light at index: " + str(line_index))
+        rospy.loginfo(
+            "TLDetector: Closest light at index: "
+            + str(line_index)
+            + " car at: "
+            + str(car_index)
+        )
         return closest_light, line_index
 
     def __process_traffic_lights(self):
@@ -204,8 +214,11 @@ class TLDetector(object):
             if self.__mode == CLSFY_MODE:
                 state = self.__get_light_state(closest_light)
             elif self.__mode == LABEL_MODE:
-                state = closest_light.state
-            rospy.logdebug(
+                if line_index - self.__get_car_index() <= 100:
+                    state = closest_light.state
+                else:
+                    state = 4
+            rospy.loginfo(
                 "TLDetector: Publishing index: "
                 + str(line_index)
                 + " and state: "
