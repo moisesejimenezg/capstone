@@ -25,7 +25,7 @@ def generator(samples, batch_sz=32):
     while 1:  # Loop forever so the generator never terminates
         shuffle(samples)
         for offset in range(0, num_samples, batch_sz):
-            batch_samples = samples[offset: offset + batch_sz]
+            batch_samples = samples[offset : offset + batch_sz]
 
             tmp_features, tmp_labels = load_data(batch_samples)
             yield shuffle(tmp_features, tmp_labels)
@@ -82,7 +82,9 @@ for i in range(1, len(train_labels)):
 
 validation_data = []
 for i in range(1, len(validation_labels)):
-    validation_data.append({"features": validation_samples[i], "labels": validation_labels[i]})
+    validation_data.append(
+        {"features": validation_samples[i], "labels": validation_labels[i]}
+    )
 
 train_generator = generator(train_data, batch_sz=batch_size)
 validation_generator = generator(validation_data, batch_sz=batch_size)

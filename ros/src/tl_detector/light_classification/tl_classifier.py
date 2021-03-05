@@ -77,8 +77,16 @@ class TLClassifier(object):
     def __hough_stop_light_detector(self, img):
         gray = np.array(img)[:, :, 2]
         cv2.medianBlur(gray, 7)
-        circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, dp=1.0, minDist=5,
-                                   param1=100, param2=15, minRadius=3, maxRadius=10)
+        circles = cv2.HoughCircles(
+            gray,
+            cv2.HOUGH_GRADIENT,
+            dp=1.0,
+            minDist=5,
+            param1=100,
+            param2=15,
+            minRadius=3,
+            maxRadius=10,
+        )
         if circles is not None:
             circles = np.uint16(np.around(circles))
             center_dots = []
