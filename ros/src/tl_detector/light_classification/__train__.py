@@ -1,13 +1,13 @@
 import os
-import pickle
 from math import ceil
-import numpy as np
 
 import matplotlib.pyplot as plt
+import numpy as np
 from keras.layers import Lambda, Flatten, Dense, Conv2D, Dropout
 from keras.models import Sequential, load_model
 from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
+
 from labeler import Labeler
 
 
@@ -32,7 +32,7 @@ def generator(samples, batch_sz=32):
 
 
 # ======== MAIN ========
-feature_shape = [600, 800, 3]
+feature_shape = [150, 200, 3]
 
 labeler = Labeler("rb")
 data = labeler.load()
@@ -45,6 +45,7 @@ print("Shape: " + str(data["features"].shape))
 model = None
 if os.path.isfile("model.h5"):
     model = load_model("model.h5")
+    print("+++ TRANSFER LEARNING +++")
 elif feature_shape is not None:
     model = Sequential()
     model.add(Lambda(lambda x: x / 255.0 - 0.5, input_shape=feature_shape))
@@ -72,7 +73,7 @@ print("train_labels: " + str(train_labels.size))
 print("validation_labels: " + str(validation_labels.size))
 
 # Set our batch size
-batch_size = 32
+batch_size = 134
 
 # compile and train the model using the generator function
 train_data = []
@@ -91,7 +92,7 @@ history_object = model.fit_generator(
     steps_per_epoch=ceil(train_samples.shape[0] / batch_size),
     validation_data=validation_generator,
     validation_steps=ceil(validation_samples.shape[0] / batch_size),
-    epochs=5,
+    epochs=20,
     verbose=1,
 )
 model.save("model.h5")

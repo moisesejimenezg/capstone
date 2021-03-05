@@ -11,3 +11,4 @@ profile.tmp
 .vscode/
 venv/
 images/
+*model.h5
