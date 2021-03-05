@@ -5,6 +5,7 @@ import cv2
 import pathlib
 from keras.models import load_model
 from labeler import Labeler
+import tensorflow as tf
 from styx_msgs.msg import TrafficLight
 
 
@@ -20,13 +21,14 @@ def resize_image(image):
 
 class TLClassifier(object):
     def __init__(self, mode="rb"):
-        # TODO load classifier
         if mode == "wb":
             self.__labeler = Labeler(mode)
         self.__model = None
+        global graph
 
         if os.path.isfile(MODEL_LOCATION):
             self.__model = load_model(MODEL_LOCATION)
+            graph = tf.get_default_graph()
         else:
             print("Could not init TLClassifier!")
 
@@ -57,14 +59,16 @@ class TLClassifier(object):
             return TrafficLight.UNKNOWN
 
         image_array = np.array(resize_image(image))
-        traffic_light = int(
-            self.model.predict(image_array[None, :, :, :], batch_size=1)
-        )
-        prob = self.model.predict_proba(image_array[None, :, :, :], batch_size=1)
+        global graph
+        with graph.as_default():
+            traffic_light = int(
+                self.model.predict(image_array[None, :, :, :], batch_size=1)
+            )
+            prob = self.model.predict_proba(image_array[None, :, :, :], batch_size=1)
 
-        if prob < 0.5:
-            print("Using hough due to low probability: " + str(prob))
-            return self.__hough_stop_light_detector(image_array)
+            if prob < 0.5:
+                print("Using hough due to low probability: " + str(prob))
+                return self.__hough_stop_light_detector(image_array)
 
         if traffic_light == 0:
             return TrafficLight.RED
