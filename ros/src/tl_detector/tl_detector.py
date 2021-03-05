@@ -115,7 +115,7 @@ class TLDetector(object):
 
         cv_image = self.__bridge.imgmsg_to_cv2(msg, "bgr8")
         light_wp, state = self.__process_traffic_lights()
-        if self.__mode == LABEL_MODE and not self.__classification_done:
+        if self.__mode == LABEL_MODE and not self.__classification_done and state != 4:
             self.__classification_done = self.__light_classifier.save_image(
                 cv_image, state
             )
